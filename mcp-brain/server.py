@@ -6,6 +6,9 @@ import subprocess
 import time
 from fastmcp import FastMCP
 
+# Global variable to track the background rendering process
+render_process = None
+
 # 1. Perspective: Advanced Observability
 logging.basicConfig(
     level=logging.INFO,
@@ -22,6 +25,7 @@ STUDIO_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "remotion-studio"))
 SRC_DIR = os.path.join(STUDIO_DIR, "src")
 MEMORY_FILE = os.path.join(BASE_DIR, "memory.md")
 PROMPT_FILE = os.path.join(BASE_DIR, "PROMPT.txt")
+RENDER_LOG_FILE = os.path.join(STUDIO_DIR, "render_log.txt")
 
 # GitHub Config
 REPO_OWNER = "remotion-dev"
@@ -132,51 +136,85 @@ def write_to_studio(filename: str, code_content: str) -> str:
     except Exception as e: return f"Write Error: {str(e)}"
 
 # ==============================================================================
-# GROUP 3: RENDERING & SELF-CORRECTION LOOP
+# GROUP 3: ASYNC RENDERING & STATUS CHECKING (TIMEOUT FIX)
 # ==============================================================================
 
 @mcp.tool()
-def render_video_studio() -> str:
+def start_video_render() -> str:
     """
-    Executes 'npm run build' and WAITS for completion.
-    If it fails, it returns the error log so the AI can fix it.
+    Starts the video rendering process in the background.
+    Returns immediately so the connection doesn't timeout.
     """
-    logger.info("🎬 STARTING RENDER PIPELINE (Please Wait)...")
+    global render_process
+    
+    if render_process is not None and render_process.poll() is None:
+        return "BUSY: A render is already running. Please wait and call 'get_render_status'."
+
+    logger.info("🚀 STARTING BACKGROUND RENDER...")
     
     try:
-        # Check output folder
+        # Ensuring output folder exists
         out_dir = os.path.join(STUDIO_DIR, "out")
         if not os.path.exists(out_dir): os.makedirs(out_dir)
 
-        # Execute build command securely
-        process = subprocess.run(
+        # Open log file to capture output
+        log_file = open(RENDER_LOG_FILE, "w", encoding="utf-8")
+        
+        # Start the process in background
+        render_process = subprocess.Popen(
             "npm run build",
             cwd=STUDIO_DIR,
             shell=True,
-            capture_output=True,
-            text=True,
-            encoding='utf-8', 
-            errors='replace'
+            stdout=log_file,
+            stderr=log_file,
+            text=True
         )
         
-        if process.returncode == 0:
-            logger.info("✅ RENDER SUCCESSFUL!")
-            return "RENDER SUCCESSFUL! Video is ready in 'out/video.mp4'."
-        else:
-            logger.error("❌ RENDER FAILED")
-            # Return the error log to the AI so it can read and fix it
-            error_log = process.stderr[-1000:] # Last 1000 chars of error
-            return f"RENDER FAILED. CRITICAL ERROR LOG:\n{error_log}\n\nINSTRUCTION: Analyze this error, rewrite the code in MyVideo.tsx, and try rendering again."
-            
+        return "RENDER STARTED. Use 'get_render_status' to check progress."
     except Exception as e:
-        return f"Execution Error: {str(e)}"
+        return f"Failed to start render: {str(e)}"
+
+@mcp.tool()
+def get_render_status() -> str:
+    """
+    Checks if the background render is finished.
+    Returns logs if failed, or success message if done.
+    """
+    global render_process
+    
+    if render_process is None:
+        return "IDLE: No render process found. You can start one."
+    
+    # Check if process is still running
+    exit_code = render_process.poll()
+    
+    if exit_code is None:
+        return "RENDERING: The video is still being processed... Please wait."
+    
+    # Process finished
+    logger.info(f"RENDER FINISHED with code: {exit_code}")
+    render_process = None # Clear process tracking
+    
+    # Read the log file
+    try:
+        with open(RENDER_LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
+            log_content = f.read()
+    except:
+        log_content = "Could not read log file."
+
+    if exit_code == 0:
+        logger.info("✅ SUCCESSFUL RENDER")
+        return f"SUCCESS: Video rendered to 'out/video.mp4'.\nLOGS: {log_content[-200:]}"
+    else:
+        logger.error("❌ RENDER FAILED")
+        return f"FAILED: Render crashed.\nERROR LOG:\n{log_content[-800:]}\n\nINSTRUCTION: Fix MyVideo.tsx and try again."
 
 if __name__ == "__main__":
     PORT = 8000
     print("\n" + "🛡️"*65)
-    print("🚀 REMOTION SELF-CORRECTING AGENT (V8.0) STARTED")
+    print("🚀 REMOTION ASYNC AGENT (V10.0) STARTED")
     print(f"🔗 SSE URL: http://127.0.0.1:{PORT}/sse")
-    print("🔒 SECURITY: Whitelist Active. Auto-Recovery Active.")
+    print("🔒 SECURITY: Whitelist Active. Async Render Active.")
     print("🛡️"*65 + "\n")
     
     mcp.run(transport="sse", port=PORT)
