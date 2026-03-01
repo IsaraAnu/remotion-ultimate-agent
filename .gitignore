@@ -1,23 +1,32 @@
-# Python Specifics
-# Exclude the virtual environment inside mcp-brain
+# --- Python Specifics ---
+# Ignore the virtual environment
 mcp-brain/venv/
+# Ignore python cache
 **/__pycache__/
 *.py[cod]
+*$py.class
 
-# Node.js Specifics
-# Exclude node_modules inside remotion-studio
+# --- Node.js Specifics ---
+# Ignore the heavy node_modules folder
 remotion-studio/node_modules/
-npm-debug.log
+# Ignore npm/yarn logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Remotion Artifacts
-# Exclude rendered videos and logs
+# --- Remotion Artifacts ---
+# Ignore the rendered mp4 videos (They are too big for Git)
 remotion-studio/out/
+# Ignore the rendering logs
 remotion-studio/render_log.txt
 
-# Volatile AI Source Code
-# As we discussed, MyVideo.tsx changes too often to track
-remotion-studio/src/MyVideo.tsx
-
-# Miscellaneous
+# --- Personal Assets & Sensitive Data ---
+# Ignore any environment variables
 .env
+# Ignore your personal logos/images inside assets but keep the folder
+remotion-studio/assets/*
+!remotion-studio/assets/.gitkeep
+
+# --- OS Specifics ---
 .DS_Store
+Thumbs.db
