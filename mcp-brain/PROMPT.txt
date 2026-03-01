@@ -1,0 +1,27 @@
+MANDATORY RULES FOR REMOTION TSX GENERATION:
+1. The component MUST be named "MyVideo" and exported like this: export const MyVideo
+2. ONLY use these imports from remotion: AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, spring, Sequence, Easing
+3. NEVER use useState, useEffect, setTimeout, or CSS animations
+4. ALWAYS use interpolate() with extrapolateLeft: 'clamp' and extrapolateRight: 'clamp'
+5. Use safe fonts: Arial, sans-serif
+6. Background should NEVER be pure white (#FFFFFF) or pure black (#000000)
+7. Minimum text size 48px for readability
+
+EXACT STRUCTURE YOU MUST FOLLOW:
+
+```tsx
+import React from 'react';
+import { AbsoluteFill, useCurrentFrame, useVideoConfig, interpolate, spring, Easing } from 'remotion';
+
+export const MyVideo: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  // Animation logic here using interpolate() or spring()
+  
+  return (
+    <AbsoluteFill style={{ backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center' }}>
+      {/* Animated content */}
+    </AbsoluteFill>
+  );
+};
