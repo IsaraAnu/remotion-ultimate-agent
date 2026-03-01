@@ -26,3 +26,4 @@
 - **Depth & Glow:** Add 15-50px colored text shadows for depth and a premium glow effect without heavy SVG filters.
 - **3D Depth:** Apply `perspective(800-1200px)` with `rotateX/Y` to create dynamic spatial elements.
 - **Visual Continuity:** Maintain a consistent color palette (e.g., cyan-blue 100, 200, 255) across all scene transitions.
+- Use Sequence boundaries with frame-based interpolate() clamping to ensure smooth 3-act transitions without visual jumps.

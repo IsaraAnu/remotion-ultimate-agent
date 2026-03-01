@@ -1,14 +1,23 @@
-# Python artifacts
-venv/
-__pycache__/
+# Python Specifics
+# Exclude the virtual environment inside mcp-brain
+mcp-brain/venv/
+**/__pycache__/
 *.py[cod]
 
-# Node artifacts
-node_modules/
+# Node.js Specifics
+# Exclude node_modules inside remotion-studio
+remotion-studio/node_modules/
 npm-debug.log
 
-# Remotion artifacts
+# Remotion Artifacts
+# Exclude rendered videos and logs
 remotion-studio/out/
+remotion-studio/render_log.txt
 
-# Secret files
+# Volatile AI Source Code
+# As we discussed, MyVideo.tsx changes too often to track
+remotion-studio/src/MyVideo.tsx
+
+# Miscellaneous
 .env
+.DS_Store

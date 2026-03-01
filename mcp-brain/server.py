@@ -34,7 +34,7 @@ BRANCH = "main"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 # ==============================================================================
-# GROUP 1: KNOWLEDGE & MEMORY (READ ONLY)
+# GROUP 1: KNOWLEDGE & SMART MEMORY (THE BRAIN)
 # ==============================================================================
 
 @mcp.tool()
@@ -61,28 +61,60 @@ def read_remotion_skill_file(file_path: str) -> str:
 
 @mcp.tool()
 def read_learning_memory() -> str:
-    """Reads 'memory.md' to learn from past mistakes."""
-    logger.info("🧠 ACCESSING LONG-TERM MEMORY")
+    """Reads 'memory.md' to recall past experiences and optimized rules."""
+    logger.info("🧠 AI is recalling long-term memory...")
     try:
-        with open(MEMORY_FILE, "r", encoding="utf-8") as f: return f.read()
-    except Exception as e: return "Memory not initialized."
-
-@mcp.tool()
-def get_mandatory_coding_rules() -> str:
-    """Reads 'PROMPT.txt' for strict coding guidelines."""
-    logger.info("📜 LOADING PROJECT RULES")
-    try:
-        with open(PROMPT_FILE, "r", encoding="utf-8") as f: return f.read()
-    except Exception as e: return "Rules file missing."
+        with open(MEMORY_FILE, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        return "Memory not initialized."
 
 @mcp.tool()
 def update_learning_memory(insight: str) -> str:
-    """Saves a new insight to 'memory.md'."""
-    logger.info(f"📝 UPDATING MEMORY: {insight[:40]}...")
+    """
+    STRICT RULES FOR MEMORY:
+    1. Maximum 20 technical insights allowed in memory.md.
+    2. Provide only ONE short, punchy technical sentence (max 150 chars).
+    """
+    logger.info(f"📝 AI attempting to update memory with: {insight[:50]}...")
+    
     try:
-        with open(MEMORY_FILE, "a", encoding="utf-8") as f: f.write(f"\n- {insight}")
-        return "Insight saved."
-    except Exception as e: return f"Error: {str(e)}"
+        # Step 1: Read current memory to check limits
+        if not os.path.exists(MEMORY_FILE):
+            return "Error: memory.md file does not exist."
+
+        with open(MEMORY_FILE, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        
+        # Count existing bullet points (lines starting with '-')
+        current_count = sum(1 for line in lines if line.strip().startswith("-"))
+        
+        # PERSPECTIVE: Enforcement of the 20-line rule
+        if current_count >= 20:
+            logger.warning("🚫 MEMORY FULL: Insight rejected.")
+            return "ERROR: Memory capacity reached (20/20). Do not add more. Review and replace existing rules if necessary."
+
+        # PERSPECTIVE: Length and Multi-line Enforcement
+        if len(insight.split('\n')) > 1 or len(insight) > 150:
+            return "ERROR: Insight too long. Provide a single short sentence (max 150 chars)."
+
+        # Step 2: Append the new insight safely
+        with open(MEMORY_FILE, "a", encoding="utf-8") as f:
+            f.write(f"\n- {insight.strip()}")
+            
+        logger.info(f"✅ Memory updated! ({current_count + 1}/20 used)")
+        return f"SUCCESS: Insight saved. Current Capacity: {current_count + 1}/20."
+        
+    except Exception as e:
+        return f"Memory Update Error: {str(e)}"
+
+@mcp.tool()
+def get_mandatory_coding_rules() -> str:
+    """Reads 'PROMPT.txt' for project-specific coding rules."""
+    logger.info("📜 LOADING LOCAL CODING RULES")
+    try:
+        with open(PROMPT_FILE, "r", encoding="utf-8") as f: return f.read()
+    except Exception as e: return "Rules file missing."
 
 # ==============================================================================
 # GROUP 2: STUDIO CONFIGURATION & ACTION
@@ -90,131 +122,75 @@ def update_learning_memory(insight: str) -> str:
 
 @mcp.tool()
 def update_video_config(width: int, height: int, fps: int, durationInSeconds: int) -> str:
-    """
-    Updates Root.tsx with video settings.
-    """
-    logger.info(f"⚙️ CONFIGURING VIDEO: {width}x{height} @ {fps}fps, {durationInSeconds}s")
+    """Updates Root.tsx with specific resolution and duration."""
+    logger.info(f"⚙️ CONFIGURING: {width}x{height}, {fps}fps, {durationInSeconds}s")
     root_path = os.path.join(SRC_DIR, "Root.tsx")
     duration_frames = durationInSeconds * fps
-    
-    new_content = f"""import {{ Composition }} from 'remotion';
+    content = f"""import {{ Composition }} from 'remotion';
 import {{ MyVideo }} from './MyVideo';
-
 export const RemotionRoot: React.FC = () => {{
-  return (
-    <>
-      <Composition
-        id="MyVideo"
-        component={{MyVideo}}
-        durationInFrames={{{duration_frames}}}
-        fps={{{fps}}}
-        width={{{width}}}
-        height={{{height}}}
-      />
-    </>
-  );
-}};
-"""
+  return (<><Composition id="MyVideo" component={{MyVideo}} durationInFrames={{{duration_frames}}} fps={{{fps}}} width={{{width}}} height={{{height}}} /></>);
+}};"""
     try:
-        with open(root_path, "w", encoding="utf-8") as f: f.write(new_content)
-        return f"SUCCESS: Root.tsx updated. ({duration_frames} frames)."
-    except Exception as e: return f"Config Failed: {str(e)}"
+        with open(root_path, "w", encoding="utf-8") as f: f.write(content)
+        return f"SUCCESS: Root.tsx updated for {durationInSeconds}s video."
+    except Exception as e: return f"Config Error: {str(e)}"
 
 @mcp.tool()
 def write_to_studio(filename: str, code_content: str) -> str:
-    """
-    Writes code to 'MyVideo.tsx'. ONLY allow MyVideo.tsx for safety.
-    """
-    if filename != "MyVideo.tsx":
-        return "SECURITY ERROR: You can only write to MyVideo.tsx."
-
+    """Writes the generated TSX code to MyVideo.tsx."""
+    if filename != "MyVideo.tsx": return "Access Denied."
     target_path = os.path.join(SRC_DIR, filename)
-    logger.info(f"✍️ WRITING CODE TO: {filename}")
+    logger.info(f"✍️ WRITING CODE TO STUDIO: {filename}")
     try:
         with open(target_path, "w", encoding="utf-8") as f: f.write(code_content)
-        return f"SUCCESS: {filename} updated."
+        return f"SUCCESS: {filename} updated in studio."
     except Exception as e: return f"Write Error: {str(e)}"
 
 # ==============================================================================
-# GROUP 3: ASYNC RENDERING & STATUS CHECKING (TIMEOUT FIX)
+# GROUP 3: ASYNC RENDERING & STATUS (TIMEOUT FIX)
 # ==============================================================================
 
 @mcp.tool()
 def start_video_render() -> str:
-    """
-    Starts the video rendering process in the background.
-    Returns immediately so the connection doesn't timeout.
-    """
+    """Starts the build process in the background to avoid timeouts."""
     global render_process
+    if render_process and render_process.poll() is None:
+        return "BUSY: A render is already in progress."
     
-    if render_process is not None and render_process.poll() is None:
-        return "BUSY: A render is already running. Please wait and call 'get_render_status'."
-
-    logger.info("🚀 STARTING BACKGROUND RENDER...")
-    
+    logger.info("🚀 TRIGGERING ASYNC RENDER...")
     try:
-        # Ensuring output folder exists
-        out_dir = os.path.join(STUDIO_DIR, "out")
-        if not os.path.exists(out_dir): os.makedirs(out_dir)
-
-        # Open log file to capture output
         log_file = open(RENDER_LOG_FILE, "w", encoding="utf-8")
-        
-        # Start the process in background
-        render_process = subprocess.Popen(
-            "npm run build",
-            cwd=STUDIO_DIR,
-            shell=True,
-            stdout=log_file,
-            stderr=log_file,
-            text=True
-        )
-        
-        return "RENDER STARTED. Use 'get_render_status' to check progress."
-    except Exception as e:
-        return f"Failed to start render: {str(e)}"
+        render_process = subprocess.Popen("npm run build", cwd=STUDIO_DIR, shell=True, stdout=log_file, stderr=log_file, text=True)
+        return "RENDER STARTED. Wait ~15s and call 'get_render_status'."
+    except Exception as e: return f"Failed: {str(e)}"
 
 @mcp.tool()
 def get_render_status() -> str:
-    """
-    Checks if the background render is finished.
-    Returns logs if failed, or success message if done.
-    """
+    """Checks the background process status and returns logs on failure."""
     global render_process
+    if not render_process: return "IDLE: No render process found."
     
-    if render_process is None:
-        return "IDLE: No render process found. You can start one."
-    
-    # Check if process is still running
     exit_code = render_process.poll()
+    if exit_code is None: return "RENDERING: Still processing frames..."
     
-    if exit_code is None:
-        return "RENDERING: The video is still being processed... Please wait."
-    
-    # Process finished
-    logger.info(f"RENDER FINISHED with code: {exit_code}")
-    render_process = None # Clear process tracking
-    
-    # Read the log file
+    render_process = None # Cleanup
     try:
         with open(RENDER_LOG_FILE, "r", encoding="utf-8", errors="replace") as f:
-            log_content = f.read()
-    except:
-        log_content = "Could not read log file."
+            log = f.read()
+    except: log = "Could not read log."
 
     if exit_code == 0:
         logger.info("✅ SUCCESSFUL RENDER")
-        return f"SUCCESS: Video rendered to 'out/video.mp4'.\nLOGS: {log_content[-200:]}"
+        return f"SUCCESS: Video ready in 'out/video.mp4'.\nLOGS: {log[-200:]}"
     else:
         logger.error("❌ RENDER FAILED")
-        return f"FAILED: Render crashed.\nERROR LOG:\n{log_content[-800:]}\n\nINSTRUCTION: Fix MyVideo.tsx and try again."
+        return f"FAILED: Error during render.\nLOG:\n{log[-800:]}\n\nINSTRUCTION: Fix code and retry."
 
 if __name__ == "__main__":
     PORT = 8000
     print("\n" + "🛡️"*65)
-    print("🚀 REMOTION ASYNC AGENT (V10.0) STARTED")
+    print("🚀 REMOTION SMART AGENT V11.0 (20-LINE MEMORY GUARD)")
     print(f"🔗 SSE URL: http://127.0.0.1:{PORT}/sse")
-    print("🔒 SECURITY: Whitelist Active. Async Render Active.")
     print("🛡️"*65 + "\n")
-    
     mcp.run(transport="sse", port=PORT)
