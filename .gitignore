@@ -1,0 +1,14 @@
+# Python artifacts
+venv/
+__pycache__/
+*.py[cod]
+
+# Node artifacts
+node_modules/
+npm-debug.log
+
+# Remotion artifacts
+remotion-studio/out/
+
+# Secret files
+.env
